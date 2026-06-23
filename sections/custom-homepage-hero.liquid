@@ -1,0 +1,296 @@
+{% comment %}
+  Section: Custom Homepage Hero
+  File: sections/custom-homepage-hero.liquid
+
+  Global settings (Theme Settings > Custom Homepage):
+    - ch_page_width  → controls max-width of content container
+
+  Section settings (Theme Editor sidebar):
+    - show_section   → show/hide the entire section
+    - text_alignment → left | center | right
+    - mobile_stack   → stack image + content vertically on mobile (toggle)
+    - heading, subheading, primary/secondary button, image, layout, colors, padding
+{% endcomment %}
+
+{{ 'custom-homepage.css' | asset_url | stylesheet_tag }}
+
+{%- if section.settings.show_section -%}
+
+{%- liquid
+  assign layout_mod = 'ch-hero--image-right'
+  if section.settings.layout == 'image-left'
+    assign layout_mod = 'ch-hero--image-left'
+  elsif section.settings.layout == 'full'
+    assign layout_mod = 'ch-hero--full'
+  endif
+-%}
+
+{%- comment %} Mobile stack override — injected only when stacking is disabled {% endcomment %}
+{%- unless section.settings.mobile_stack -%}
+<style>
+  @media screen and (max-width: 640px) {
+    #custom-hero-{{ section.id }} .ch-hero__inner {
+      flex-direction: row !important;
+      flex-wrap: nowrap !important;
+    }
+    #custom-hero-{{ section.id }} .ch-hero__content,
+    #custom-hero-{{ section.id }} .ch-hero__image-wrap {
+      flex: 1 1 0 !important;
+      min-width: 0 !important;
+      width: auto !important;
+    }
+  }
+</style>
+{%- endunless -%}
+
+<section
+  id="custom-hero-{{ section.id }}"
+  class="ch-section ch-hero {{ layout_mod }}"
+  style="
+    background-color: {{ section.settings.bg_color }};
+    color: {{ section.settings.text_color }};
+    text-align: {{ section.settings.text_alignment }};
+    --ch-hero-pt: {{ section.settings.padding_top }}px;
+    --ch-hero-pb: {{ section.settings.padding_bottom }}px;
+    --ch-page-width: {{ settings.ch_page_width | default: 1200 }}px;
+  "
+>
+  <div class="ch-container">
+    <div class="ch-hero__inner">
+
+      {%- comment %} ── Content column ─────────────────────────────────── {% endcomment %}
+      <div class="ch-hero__content">
+
+        {%- if section.settings.heading != blank -%}
+          <h1 class="ch-hero__heading">{{ section.settings.heading | escape }}</h1>
+        {%- endif -%}
+
+        {%- if section.settings.subheading != blank -%}
+          <p class="ch-hero__subheading">{{ section.settings.subheading | escape }}</p>
+        {%- endif -%}
+
+        <div
+          class="ch-hero__buttons"
+          style="justify-content: {%- if section.settings.text_alignment == 'center' -%}center{%- elsif section.settings.text_alignment == 'right' -%}flex-end{%- else -%}flex-start{%- endif -%};"
+        >
+          {%- if section.settings.btn_text != blank -%}
+            <a
+              href="{{ section.settings.btn_link | default: '#' }}"
+              class="ch-btn ch-btn--primary"
+              style="background-color: {{ section.settings.btn_bg_color }}; color: {{ section.settings.btn_text_color }}; border-color: {{ section.settings.btn_bg_color }};"
+            >
+              {{ section.settings.btn_text | escape }}
+            </a>
+          {%- endif -%}
+
+          {%- if section.settings.btn2_text != blank -%}
+            <a
+              href="{{ section.settings.btn2_link | default: '#' }}"
+              class="ch-btn ch-btn--secondary"
+              style="color: {{ section.settings.text_color }}; border-color: {{ section.settings.text_color }};"
+            >
+              {{ section.settings.btn2_text | escape }}
+            </a>
+          {%- endif -%}
+        </div>
+
+      </div>
+
+      {%- comment %} ── Image column ─────────────────────────────────────── {% endcomment %}
+      {%- if section.settings.image != blank -%}
+        <div class="ch-hero__image-wrap">
+          {{
+            section.settings.image
+            | image_url: width: 1400
+            | image_tag:
+              alt: section.settings.image_alt,
+              loading: 'eager',
+              fetchpriority: 'high',
+              widths: '400, 600, 800, 1000, 1200, 1400',
+              sizes: '(max-width: 640px) 100vw, 50vw'
+          }}
+        </div>
+      {%- endif -%}
+
+    </div>
+  </div>
+</section>
+
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "Custom Hero",
+  "tag": "section",
+  "class": "ch-hero-section",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Visibility & Global"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_section",
+      "label": "Show Section",
+      "default": true
+    },
+    {
+      "type": "select",
+      "id": "text_alignment",
+      "label": "Text Alignment",
+      "options": [
+        { "value": "left",   "label": "Left"   },
+        { "value": "center", "label": "Center" },
+        { "value": "right",  "label": "Right"  }
+      ],
+      "default": "left"
+    },
+    {
+      "type": "checkbox",
+      "id": "mobile_stack",
+      "label": "Stack on Mobile",
+      "default": true,
+      "info": "When enabled, image and content stack vertically on mobile. Disable to keep them side-by-side."
+    },
+    {
+      "type": "header",
+      "content": "Content"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Welcome to Our Store"
+    },
+    {
+      "type": "textarea",
+      "id": "subheading",
+      "label": "Subheading / Description",
+      "default": "Discover our latest collection of premium products crafted with care."
+    },
+    {
+      "type": "header",
+      "content": "Primary Button"
+    },
+    {
+      "type": "text",
+      "id": "btn_text",
+      "label": "Button Text",
+      "default": "Shop Now"
+    },
+    {
+      "type": "url",
+      "id": "btn_link",
+      "label": "Button Link"
+    },
+    {
+      "type": "color",
+      "id": "btn_bg_color",
+      "label": "Button Background Color",
+      "default": "#111111"
+    },
+    {
+      "type": "color",
+      "id": "btn_text_color",
+      "label": "Button Text Color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "header",
+      "content": "Secondary Button (optional)"
+    },
+    {
+      "type": "text",
+      "id": "btn2_text",
+      "label": "Button Text",
+      "info": "Leave blank to hide."
+    },
+    {
+      "type": "url",
+      "id": "btn2_link",
+      "label": "Button Link"
+    },
+    {
+      "type": "header",
+      "content": "Image"
+    },
+    {
+      "type": "image_picker",
+      "id": "image",
+      "label": "Hero Image"
+    },
+    {
+      "type": "text",
+      "id": "image_alt",
+      "label": "Image Alt Text",
+      "default": "Hero image",
+      "info": "Describe the image for accessibility and SEO."
+    },
+    {
+      "type": "header",
+      "content": "Layout & Style"
+    },
+    {
+      "type": "select",
+      "id": "layout",
+      "label": "Layout",
+      "options": [
+        { "value": "image-right", "label": "Image Right, Content Left" },
+        { "value": "image-left",  "label": "Image Left, Content Right" },
+        { "value": "full",        "label": "Full Width / Content Centered" }
+      ],
+      "default": "image-right"
+    },
+    {
+      "type": "color",
+      "id": "bg_color",
+      "label": "Background Color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Text Color",
+      "default": "#111111"
+    },
+    {
+      "type": "header",
+      "content": "Spacing"
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "label": "Padding Top",
+      "min": 0,
+      "max": 160,
+      "step": 4,
+      "unit": "px",
+      "default": 64
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "label": "Padding Bottom",
+      "min": 0,
+      "max": 160,
+      "step": 4,
+      "unit": "px",
+      "default": 64
+    }
+  ],
+  "presets": [
+    {
+      "name": "Custom Hero",
+      "settings": {
+        "heading": "Welcome to Our Store",
+        "subheading": "Discover our latest collection of premium products crafted with care.",
+        "btn_text": "Shop Now",
+        "layout": "image-right",
+        "show_section": true,
+        "text_alignment": "left",
+        "mobile_stack": true
+      }
+    }
+  ]
+}
+{% endschema %}

@@ -1,0 +1,309 @@
+{% comment %}
+  Section: Custom Homepage Footer
+  File: sections/custom-homepage-footer.liquid
+
+  Global settings (Theme Settings > Custom Homepage):
+    - ch_page_width  → controls max-width of content container
+
+  Section settings:
+    - show_section   → show/hide toggle
+    - text_alignment → left | center | right
+    - brand name, about text, contact info, copyright
+    - Blocks: "link_group" (heading + up to 6 links), "social_link" (platform + URL)
+{% endcomment %}
+
+{{ 'custom-homepage.css' | asset_url | stylesheet_tag }}
+
+{%- if section.settings.show_section -%}
+
+<footer
+  id="custom-footer-{{ section.id }}"
+  class="ch-section ch-footer"
+  style="
+    background-color: {{ section.settings.bg_color }};
+    color: {{ section.settings.text_color }};
+    text-align: {{ section.settings.text_alignment }};
+    --ch-foot-pt: {{ section.settings.padding_top }}px;
+    --ch-foot-pb: {{ section.settings.padding_bottom }}px;
+    --ch-page-width: {{ settings.ch_page_width | default: 1200 }}px;
+  "
+  role="contentinfo"
+>
+  <div class="ch-container">
+
+    {%- comment %} ═══ Top row ════════════════════════════════════════════ {% endcomment %}
+    <div class="ch-footer__top">
+
+      {%- comment %} ── Brand / about column ──────────────────────────── {% endcomment %}
+      <div class="ch-footer__brand">
+        {%- if section.settings.brand_name != blank -%}
+          <p class="ch-footer__brand-name">{{ section.settings.brand_name | escape }}</p>
+        {%- endif -%}
+
+        {%- if section.settings.about_text != blank -%}
+          <p class="ch-footer__about-text">{{ section.settings.about_text | escape }}</p>
+        {%- endif -%}
+
+        {%- assign has_contact = false -%}
+        {%- if section.settings.contact_phone != blank or section.settings.contact_email != blank or section.settings.contact_address != blank -%}
+          {%- assign has_contact = true -%}
+        {%- endif -%}
+
+        {%- if has_contact -%}
+          <div class="ch-footer__contact">
+            {%- if section.settings.contact_phone != blank -%}
+              <span>📞 <a href="tel:{{ section.settings.contact_phone | remove: ' ' }}">{{ section.settings.contact_phone | escape }}</a></span>
+            {%- endif -%}
+            {%- if section.settings.contact_email != blank -%}
+              <span>✉️ <a href="mailto:{{ section.settings.contact_email }}">{{ section.settings.contact_email | escape }}</a></span>
+            {%- endif -%}
+            {%- if section.settings.contact_address != blank -%}
+              <span>📍 {{ section.settings.contact_address | escape }}</span>
+            {%- endif -%}
+          </div>
+        {%- endif -%}
+
+        {%- assign social_blocks = section.blocks | where: 'type', 'social_link' -%}
+        {%- if social_blocks.size > 0 -%}
+          <div class="ch-footer__social">
+            {%- for block in social_blocks -%}
+              {%- if block.settings.url != blank -%}
+                <a
+                  href="{{ block.settings.url }}"
+                  class="ch-footer__social-link"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="{{ block.settings.platform | escape }}"
+                  {{ block.shopify_attributes }}
+                >
+                  {{ block.settings.platform | escape }}
+                </a>
+              {%- endif -%}
+            {%- endfor -%}
+          </div>
+        {%- endif -%}
+      </div>
+
+      {%- comment %} ── Link group columns ───────────────────────────── {% endcomment %}
+      {%- assign link_group_blocks = section.blocks | where: 'type', 'link_group' -%}
+      {%- for block in link_group_blocks -%}
+        <div class="ch-footer__link-group" {{ block.shopify_attributes }}>
+          {%- if block.settings.group_title != blank -%}
+            <p class="ch-footer__link-group-title">{{ block.settings.group_title | escape }}</p>
+          {%- endif -%}
+          <ul class="ch-footer__links">
+            {%- for i in (1..6) -%}
+              {%- liquid
+                assign label_key = 'link_' | append: i | append: '_label'
+                assign url_key   = 'link_' | append: i | append: '_url'
+                assign lbl       = block.settings[label_key]
+                assign url       = block.settings[url_key]
+              -%}
+              {%- if lbl != blank and url != blank -%}
+                <li><a href="{{ url }}">{{ lbl | escape }}</a></li>
+              {%- endif -%}
+            {%- endfor -%}
+          </ul>
+        </div>
+      {%- endfor -%}
+
+    </div>
+
+    {%- comment %} ═══ Bottom bar ══════════════════════════════════════ {% endcomment %}
+    <div class="ch-footer__bottom">
+      {%- if section.settings.copyright_text != blank -%}
+        <span>{{ section.settings.copyright_text | escape }}</span>
+      {%- else -%}
+        <span>&copy; {{ 'now' | date: '%Y' }} {{ shop.name }}. All rights reserved.</span>
+      {%- endif -%}
+    </div>
+
+  </div>
+</footer>
+
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "Custom Footer",
+  "tag": "section",
+  "class": "ch-footer-section",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Visibility & Global"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_section",
+      "label": "Show Section",
+      "default": true
+    },
+    {
+      "type": "select",
+      "id": "text_alignment",
+      "label": "Text Alignment",
+      "options": [
+        { "value": "left",   "label": "Left"   },
+        { "value": "center", "label": "Center" },
+        { "value": "right",  "label": "Right"  }
+      ],
+      "default": "left"
+    },
+    {
+      "type": "header",
+      "content": "Brand"
+    },
+    {
+      "type": "text",
+      "id": "brand_name",
+      "label": "Brand / Store Name",
+      "default": "My Store"
+    },
+    {
+      "type": "textarea",
+      "id": "about_text",
+      "label": "About / Tagline Text",
+      "default": "Quality products delivered to your door. Your satisfaction is our priority."
+    },
+    {
+      "type": "header",
+      "content": "Contact Information"
+    },
+    {
+      "type": "text",
+      "id": "contact_phone",
+      "label": "Phone Number",
+      "default": "+1 (800) 000-0000"
+    },
+    {
+      "type": "text",
+      "id": "contact_email",
+      "label": "Email Address",
+      "default": "hello@mystore.com"
+    },
+    {
+      "type": "text",
+      "id": "contact_address",
+      "label": "Address",
+      "default": "123 Main Street, City, State 00000"
+    },
+    {
+      "type": "header",
+      "content": "Copyright"
+    },
+    {
+      "type": "text",
+      "id": "copyright_text",
+      "label": "Copyright Text",
+      "info": "Leave blank to auto-generate from the current year and shop name."
+    },
+    {
+      "type": "header",
+      "content": "Style"
+    },
+    {
+      "type": "color",
+      "id": "bg_color",
+      "label": "Background Color",
+      "default": "#111111"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Text Color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "header",
+      "content": "Spacing"
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "label": "Padding Top",
+      "min": 0,
+      "max": 160,
+      "step": 4,
+      "unit": "px",
+      "default": 64
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "label": "Padding Bottom",
+      "min": 0,
+      "max": 120,
+      "step": 4,
+      "unit": "px",
+      "default": 40
+    }
+  ],
+  "blocks": [
+    {
+      "type": "link_group",
+      "name": "Link Group",
+      "settings": [
+        { "type": "text", "id": "group_title",  "label": "Group Heading", "default": "Quick Links" },
+        { "type": "header", "content": "Link 1" },
+        { "type": "text", "id": "link_1_label", "label": "Label", "default": "Home"  },
+        { "type": "url",  "id": "link_1_url",   "label": "URL"   },
+        { "type": "header", "content": "Link 2" },
+        { "type": "text", "id": "link_2_label", "label": "Label", "default": "Shop"  },
+        { "type": "url",  "id": "link_2_url",   "label": "URL"   },
+        { "type": "header", "content": "Link 3" },
+        { "type": "text", "id": "link_3_label", "label": "Label", "default": "About" },
+        { "type": "url",  "id": "link_3_url",   "label": "URL"   },
+        { "type": "header", "content": "Link 4" },
+        { "type": "text", "id": "link_4_label", "label": "Label" },
+        { "type": "url",  "id": "link_4_url",   "label": "URL"   },
+        { "type": "header", "content": "Link 5" },
+        { "type": "text", "id": "link_5_label", "label": "Label" },
+        { "type": "url",  "id": "link_5_url",   "label": "URL"   },
+        { "type": "header", "content": "Link 6" },
+        { "type": "text", "id": "link_6_label", "label": "Label" },
+        { "type": "url",  "id": "link_6_url",   "label": "URL"   }
+      ]
+    },
+    {
+      "type": "social_link",
+      "name": "Social Link",
+      "settings": [
+        {
+          "type": "text",
+          "id": "platform",
+          "label": "Platform Name",
+          "default": "Instagram",
+          "info": "e.g. Instagram, Facebook, TikTok, Twitter, YouTube, Pinterest"
+        },
+        {
+          "type": "url",
+          "id": "url",
+          "label": "Profile URL"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Custom Footer",
+      "settings": {
+        "show_section": true,
+        "text_alignment": "left",
+        "brand_name": "My Store",
+        "about_text": "Quality products delivered to your door. Your satisfaction is our priority.",
+        "contact_phone": "+1 (800) 000-0000",
+        "contact_email": "hello@mystore.com",
+        "contact_address": "123 Main Street, City, State 00000"
+      },
+      "blocks": [
+        { "type": "link_group", "settings": { "group_title": "Shop",    "link_1_label": "All Products", "link_2_label": "New Arrivals", "link_3_label": "Best Sellers", "link_4_label": "Sale"       } },
+        { "type": "link_group", "settings": { "group_title": "Support", "link_1_label": "FAQ",          "link_2_label": "Shipping Policy", "link_3_label": "Returns",   "link_4_label": "Contact Us" } },
+        { "type": "social_link", "settings": { "platform": "Instagram" } },
+        { "type": "social_link", "settings": { "platform": "Facebook"  } },
+        { "type": "social_link", "settings": { "platform": "TikTok"    } }
+      ]
+    }
+  ]
+}
+{% endschema %}

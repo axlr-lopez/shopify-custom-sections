@@ -1,0 +1,29 @@
+[
+  {
+    "name": "Custom Homepage",
+    "settings": [
+      {
+        "type": "paragraph",
+        "content": "Global settings that apply to all Custom Homepage sections."
+      },
+      {
+        "type": "range",
+        "id": "ch_page_width",
+        "label": "Page Width",
+        "min": 900,
+        "max": 1600,
+        "step": 20,
+        "unit": "px",
+        "default": 1200,
+        "info": "Maximum content width for all Custom Homepage sections."
+      },
+      {
+        "type": "color",
+        "id": "ch_default_bg",
+        "label": "Default Section Background",
+        "default": "#ffffff",
+        "info": "Fallback background color when no per-section color is set."
+      }
+    ]
+  }
+]

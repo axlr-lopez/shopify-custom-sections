@@ -1,0 +1,327 @@
+{% comment %}
+  Section: Custom Homepage Collections
+  File: sections/custom-homepage-collections.liquid
+
+  Global settings (Theme Settings > Custom Homepage):
+    - ch_page_width  → controls max-width of content container
+
+  Section settings:
+    - show_section   → show/hide toggle
+    - text_alignment → left | center | right
+    - mobile_stack   → when disabled, grid columns are preserved on mobile
+    - title, subtitle, columns, show/hide CTA, colors, padding
+    - Blocks: "collection_card" with Shopify collection picker + manual overrides
+{% endcomment %}
+
+{{ 'custom-homepage.css' | asset_url | stylesheet_tag }}
+
+{%- if section.settings.show_section -%}
+
+{%- comment %} Mobile stack override — preserves grid columns on mobile when disabled {% endcomment %}
+{%- unless section.settings.mobile_stack -%}
+<style>
+  @media screen and (max-width: 900px) {
+    #custom-collections-{{ section.id }} .ch-collections-grid {
+      grid-template-columns: repeat({{ section.settings.columns }}, 1fr) !important;
+    }
+  }
+  @media screen and (max-width: 640px) {
+    #custom-collections-{{ section.id }} .ch-collections-grid {
+      grid-template-columns: repeat({{ section.settings.columns }}, 1fr) !important;
+    }
+  }
+</style>
+{%- endunless -%}
+
+<section
+  id="custom-collections-{{ section.id }}"
+  class="ch-section ch-collections"
+  style="
+    background-color: {{ section.settings.bg_color }};
+    color: {{ section.settings.text_color }};
+    text-align: {{ section.settings.text_alignment }};
+    --ch-col-pt: {{ section.settings.padding_top }}px;
+    --ch-col-pb: {{ section.settings.padding_bottom }}px;
+    --ch-col-cols: {{ section.settings.columns }};
+    --ch-page-width: {{ settings.ch_page_width | default: 1200 }}px;
+  "
+>
+  <div class="ch-container">
+
+    {%- if section.settings.heading != blank or section.settings.subtitle != blank -%}
+      <div class="ch-section-header">
+        {%- if section.settings.heading != blank -%}
+          <h2 class="ch-section-header__title">{{ section.settings.heading | escape }}</h2>
+        {%- endif -%}
+        {%- if section.settings.subtitle != blank -%}
+          <p class="ch-section-header__subtitle">{{ section.settings.subtitle | escape }}</p>
+        {%- endif -%}
+      </div>
+    {%- endif -%}
+
+    {%- if section.blocks.size > 0 -%}
+      <div class="ch-collections-grid">
+        {%- for block in section.blocks -%}
+          {%- if block.type == 'collection_card' -%}
+
+            {%- liquid
+              assign selected_collection = block.settings.collection
+              assign has_collection      = false
+              if selected_collection != blank
+                assign has_collection = true
+              endif
+
+              assign card_image = block.settings.card_image
+              assign card_title = block.settings.card_title
+              assign card_desc  = block.settings.card_desc
+              assign card_cta   = block.settings.cta_text
+              assign card_link  = block.settings.cta_link
+
+              if has_collection
+                if card_image == blank
+                  assign card_image = selected_collection.featured_image
+                endif
+                if card_title == blank
+                  assign card_title = selected_collection.title
+                endif
+                if card_desc == blank
+                  assign card_desc = selected_collection.description | strip_html | truncate: 100
+                endif
+                if card_link == blank
+                  assign card_link = selected_collection.url
+                endif
+              endif
+            -%}
+
+            <a
+              href="{{ card_link | default: '#' }}"
+              class="ch-collection-card"
+              {{ block.shopify_attributes }}
+              aria-label="{{ card_title | escape }}"
+            >
+              <div class="ch-collection-card__image">
+                {%- if card_image != blank -%}
+                  {{
+                    card_image
+                    | image_url: width: 900
+                    | image_tag:
+                      alt: card_image.alt | default: card_title,
+                      loading: 'lazy',
+                      widths: '400, 600, 900',
+                      sizes: '(max-width: 640px) 100vw, (max-width: 900px) 50vw, 33vw'
+                  }}
+                {%- else -%}
+                  {{ 'collection-1' | placeholder_svg_tag: 'placeholder-svg' }}
+                {%- endif -%}
+              </div>
+
+              <div class="ch-collection-card__overlay"></div>
+
+              <div class="ch-collection-card__content">
+                {%- if card_title != blank -%}
+                  <h3 class="ch-collection-card__title">{{ card_title | escape }}</h3>
+                {%- endif -%}
+                {%- if card_desc != blank -%}
+                  <p class="ch-collection-card__desc">{{ card_desc }}</p>
+                {%- endif -%}
+                {%- if section.settings.show_cta and card_cta != blank -%}
+                  <span class="ch-collection-card__cta">{{ card_cta | escape }}</span>
+                {%- endif -%}
+              </div>
+
+            </a>
+
+          {%- endif -%}
+        {%- endfor -%}
+      </div>
+    {%- else -%}
+      <p style="text-align:center; opacity:0.5;">Add collection cards using the sidebar in the Theme Editor.</p>
+    {%- endif -%}
+
+  </div>
+</section>
+
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "Custom Collections",
+  "tag": "section",
+  "class": "ch-collections-section",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Visibility & Global"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_section",
+      "label": "Show Section",
+      "default": true
+    },
+    {
+      "type": "select",
+      "id": "text_alignment",
+      "label": "Text Alignment",
+      "options": [
+        { "value": "left",   "label": "Left"   },
+        { "value": "center", "label": "Center" },
+        { "value": "right",  "label": "Right"  }
+      ],
+      "default": "center"
+    },
+    {
+      "type": "checkbox",
+      "id": "mobile_stack",
+      "label": "Stack to Fewer Columns on Mobile",
+      "default": true,
+      "info": "When enabled, the grid collapses on small screens. Disable to keep the desktop column count."
+    },
+    {
+      "type": "header",
+      "content": "Section Header"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Section Title",
+      "default": "Shop by Collection"
+    },
+    {
+      "type": "text",
+      "id": "subtitle",
+      "label": "Subtitle",
+      "default": "Find your style"
+    },
+    {
+      "type": "header",
+      "content": "Layout"
+    },
+    {
+      "type": "select",
+      "id": "columns",
+      "label": "Cards Per Row (Desktop)",
+      "options": [
+        { "value": "2", "label": "2 per row" },
+        { "value": "3", "label": "3 per row" },
+        { "value": "4", "label": "4 per row" }
+      ],
+      "default": "3"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_cta",
+      "label": "Show CTA Label on Cards",
+      "default": true
+    },
+    {
+      "type": "header",
+      "content": "Style"
+    },
+    {
+      "type": "color",
+      "id": "bg_color",
+      "label": "Section Background Color",
+      "default": "#f7f7f7"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Section Text Color",
+      "default": "#111111"
+    },
+    {
+      "type": "header",
+      "content": "Spacing"
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "label": "Padding Top",
+      "min": 0,
+      "max": 160,
+      "step": 4,
+      "unit": "px",
+      "default": 64
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "label": "Padding Bottom",
+      "min": 0,
+      "max": 160,
+      "step": 4,
+      "unit": "px",
+      "default": 64
+    }
+  ],
+  "blocks": [
+    {
+      "type": "collection_card",
+      "name": "Collection Card",
+      "settings": [
+        {
+          "type": "collection",
+          "id": "collection",
+          "label": "Select Collection",
+          "info": "Auto-fills image, title, description, and URL. Manual fields below override these."
+        },
+        {
+          "type": "header",
+          "content": "Manual Overrides (optional)"
+        },
+        {
+          "type": "image_picker",
+          "id": "card_image",
+          "label": "Card Image Override"
+        },
+        {
+          "type": "text",
+          "id": "card_title",
+          "label": "Collection Title Override"
+        },
+        {
+          "type": "text",
+          "id": "card_desc",
+          "label": "Short Description Override"
+        },
+        {
+          "type": "header",
+          "content": "Call to Action"
+        },
+        {
+          "type": "text",
+          "id": "cta_text",
+          "label": "CTA Label",
+          "default": "Shop Now"
+        },
+        {
+          "type": "url",
+          "id": "cta_link",
+          "label": "CTA Link Override",
+          "info": "Leave blank to use the selected collection URL."
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Custom Collections",
+      "settings": {
+        "show_section": true,
+        "text_alignment": "center",
+        "mobile_stack": true,
+        "heading": "Shop by Collection",
+        "subtitle": "Find your style",
+        "columns": "3",
+        "show_cta": true
+      },
+      "blocks": [
+        { "type": "collection_card", "settings": { "cta_text": "Shop Now" } },
+        { "type": "collection_card", "settings": { "cta_text": "Shop Now" } },
+        { "type": "collection_card", "settings": { "cta_text": "Shop Now" } }
+      ]
+    }
+  ]
+}
+{% endschema %}
